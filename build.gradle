@@ -48,7 +48,7 @@ allprojects {
 	repositories {
 		maven {
 			name = "Legacy Rewoven"
-			url = "https://github.com/LegacyRewoven/maven/raw/main/"
+			url = "https://maven.rewovenmc.tk"
 		}
 	}
 
@@ -58,8 +58,8 @@ allprojects {
 
 	dependencies {
 		minecraft("com.mojang:minecraft:${project.mc_version}")
-		mappings("io.github.legacyrewoven:yarn:${project.mc_version}+build.${project.yarn_version}:v2")
-		modImplementation("net.fabricmc:fabric-loader:0.12.5")
+		mappings("net.fabricmc:yarn:${project.mc_version}+build.${project.yarn_version}:v2")
+		modImplementation("net.fabricmc:fabric-loader:${project.loader_version}")
 
 		if (System.getProperty("os.name").toLowerCase().contains("mac")) {
 			implementation 'org.lwjgl.lwjgl:lwjgl_util:2.9.4-nightly-20150209'
