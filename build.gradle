@@ -26,11 +26,32 @@ def getSubprojectVersion(project, version) {
 	}
 }
 
-def setupRepositories(RepositoryHandler repositories) {
-	def ENV = System.getenv()
-	repositories.maven {
-		url = rootProject.projectDir.toPath().resolve("../legacy-rewoven-maven").toString()
-	}
+def getBranch() {
+   if (System.getenv().GIT_BRANCH) {
+      def branch = System.getenv().GITHUB_REF
+      return branch.substring(branch.lastIndexOf("/") + 1)
+   }
+   if (grgit == null) {
+      return "unknown"
+   }
+   def branch = grgit.branch.current().name
+   return branch.substring(branch.lastIndexOf("/") + 1)
+}
+
+def static setupRepositories(RepositoryHandler repositories) {
+   def ENV = System.getenv()
+   if (ENV.MAVEN_PUBLISH_TOKEN) {
+      repositories.maven {
+         url 'https://maven.rewovenmc.tk/'
+         credentials {
+            username 'BobTheBuildSlave'
+            password ENV.MAVEN_PUBLISH_TOKEN
+         }
+         authentication {
+            basic(BasicAuthentication)
+         }
+      }
+   }
 }
 
 allprojects {
@@ -198,37 +219,45 @@ subprojects.each {
 	}
 }
 
-
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			artifact(file("${project.buildDir}/libs/$archivesBaseName-${version}-maven.jar")) {
-				builtBy remapMavenJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
+   publications {
+      mavenJava(MavenPublication) {
+         artifact(file("${project.buildDir}/libs/$archivesBaseName-${version}-maven.jar")) {
+            builtBy remapMavenJar
+         }
+         artifact(sourcesJar) {
+            builtBy remapSourcesJar
+         }
+         artifact javadocJar
 
-			artifact javadocJar
-			pom.withXml {
-				def depsNode = asNode().appendNode("dependencies")
-				subprojects.each {
-					if (it.name != project.testmods_project) {
-						def depNode = depsNode.appendNode("dependency")
-						depNode.appendNode("groupId", it.group)
-						depNode.appendNode("artifactId", it.name)
-						depNode.appendNode("version", it.version)
-						depNode.appendNode("scope", "compile")
-					}
-				}
-			}
-		}
-	}
-	repositories {
-		maven {
-			url = rootProject.projectDir.toPath().resolve("../legacy-rewoven-maven").toString()
-		}
-	}
+         pom.withXml {
+            def depsNode = asNode().appendNode("dependencies")
+            subprojects.each {
+               if (it.name != project.testmods_project) {
+                  def depNode = depsNode.appendNode("dependency")
+                  depNode.appendNode("groupId", it.group)
+                  depNode.appendNode("artifactId", it.name)
+                  depNode.appendNode("version", it.version)
+                  depNode.appendNode("scope", "compile")
+               }
+            }
+         }
+      }
+   }
+   repositories {
+      if (ENV.MAVEN_PUBLISH_TOKEN) {
+         maven {
+            url 'https://maven.rewovenmc.tk/'
+            credentials {
+               username 'BobTheBuildSlave'
+               password ENV.MAVEN_PUBLISH_TOKEN
+            }
+            authentication {
+               basic(BasicAuthentication)
+            }
+         }
+      }
+   }
 }
 
 task licenseFormatAll
