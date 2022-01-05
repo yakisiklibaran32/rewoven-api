@@ -9,6 +9,8 @@ plugins {
 	id 'signing'
 }
 
+def ENV = System.getenv()
+
 setVersion("${project.base_version}+${project.mc_version}")
 logger.lifecycle("Building Fabric: " + version)
 
